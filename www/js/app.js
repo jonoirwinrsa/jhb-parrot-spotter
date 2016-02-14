@@ -21,8 +21,12 @@ angular.module('jonoirwin.parrots', ['ionic', 'jonoirwin.parrots.services', 'jon
     var ref = new Firebase("https://jhb-parrot-spotter.firebaseio.com/records");
     $scope.records = $firebaseArray(ref);
     $scope.addRecord = function () {
+      var res = $scope.currentLocationString.split(",");
+
       $scope.records.$add({
-        location: $scope.currentLocationString
+        suburb: res[0],
+        city: res[1],
+        province: res[2]
       });
     };
 
