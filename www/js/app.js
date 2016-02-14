@@ -1,8 +1,4 @@
-angular.module('jonoirwin.parrots', ['ionic', 'jonoirwin.parrots.services', 'jonoirwin.parrots.filters', 'jonoirwin.parrots.directives'])
-
-  .constant('WUNDERGROUND_API_KEY', '1cc2d3de40fa5af0')
-
-  .constant('FORECASTIO_KEY', '4cd3c5673825a361eb5ce108103ee84a')
+angular.module('jonoirwin.parrots', ['ionic', 'jonoirwin.parrots.services', 'jonoirwin.parrots.directives'])
 
   .constant('FLICKR_API_KEY', '504fd7414f6275eb5b657ddbfba80a2c')
 
@@ -12,7 +8,7 @@ angular.module('jonoirwin.parrots', ['ionic', 'jonoirwin.parrots.services', 'jon
     };
   })
 
-  .controller('WeatherCtrl', function ($scope, $timeout, $rootScope, Weather, Geo, Flickr, $ionicModal, $ionicPlatform) {
+  .controller('MainCtrl', function ($scope, $timeout, $rootScope, Geo, Flickr, $ionicModal, $ionicPlatform) {
     var _this = this;
 
     $ionicPlatform.ready(function () {
@@ -23,21 +19,6 @@ angular.module('jonoirwin.parrots', ['ionic', 'jonoirwin.parrots.services', 'jon
     });
 
     $scope.activeBgImageIndex = 0;
-
-    $scope.showSettings = function () {
-      if (!$scope.settingsModal) {
-        // Load the modal from the given template URL
-        $ionicModal.fromTemplateUrl('settings.html', function (modal) {
-          $scope.settingsModal = modal;
-          $scope.settingsModal.show();
-        }, {
-          // The animation we want to use for the modal entrance
-          animation: 'slide-in-up'
-        });
-      } else {
-        $scope.settingsModal.show();
-      }
-    };
 
 
     this.getBackgroundImage = function (lat, lng, locString) {
@@ -52,34 +33,6 @@ angular.module('jonoirwin.parrots', ['ionic', 'jonoirwin.parrots.services', 'jon
       });
     };
 
-    this.getCurrent = function (lat, lng, locString) {
-      Weather.getAtLocation(lat, lng).then(function (resp) {
-        /*
-         if(resp.response && resp.response.error) {
-         alert('This Wunderground API Key has exceeded the free limit. Please use your own Wunderground key');
-         return;
-         }
-         */
-        $scope.current = resp.data;
-        console.log('GOT CURRENT', $scope.current);
-        $rootScope.$broadcast('scroll.refreshComplete');
-      }, function (error) {
-        alert('Unable to get current conditions');
-        console.error(error);
-      });
-    };
-
-    $ionicPlatform.ready(function () {
-      var posOptions = {timeout: 10000, enableHighAccuracy: false};
-      $cordovaGeolocation
-        .getCurrentPosition(posOptions)
-        .then(function (position) {
-          var lat = position.coords.latitude;
-          var long = position.coords.longitude;
-        }, function (err) {
-          // error
-        });
-    });
 
     this.cycleBgImages = function () {
       $timeout(function cycle() {
@@ -107,18 +60,3 @@ angular.module('jonoirwin.parrots', ['ionic', 'jonoirwin.parrots.services', 'jon
 
     $scope.refreshData();
   })
-
-  .controller('SettingsCtrl', function ($scope, Settings) {
-    $scope.settings = Settings.getSettings();
-
-    // Watch deeply for settings changes, and save them
-    // if necessary
-    $scope.$watch('settings', function (v) {
-      Settings.save();
-    }, true);
-
-    $scope.closeSettings = function () {
-      $scope.modal.hide();
-    };
-
-  });
