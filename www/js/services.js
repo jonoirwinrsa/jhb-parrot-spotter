@@ -66,7 +66,7 @@ angular.module('jonoirwin.parrots.services', ['ngResource'])
 
     var flickrSearch = $resource(baseUrl, {
       method: 'flickr.groups.pools.getPhotos',
-      group_id: '1463451@N25',
+      group_id: '28763481@N00',
       safe_search: 1,
       jsoncallback: 'JSON_CALLBACK',
       api_key: FLICKR_API_KEY,
@@ -84,7 +84,7 @@ angular.module('jonoirwin.parrots.services', ['ngResource'])
         console.log('Searching flickr for tags', tags);
 
         flickrSearch.get({
-          tags: tags,
+          tags: 'sunrise',
           lat: lat,
           lng: lng
         }, function (val) {

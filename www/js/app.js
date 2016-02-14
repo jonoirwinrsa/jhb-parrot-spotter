@@ -1,4 +1,4 @@
-angular.module('jonoirwin.parrots', ['ionic', 'jonoirwin.parrots.services', 'jonoirwin.parrots.directives'])
+angular.module('jonoirwin.parrots', ['ionic', 'jonoirwin.parrots.services', 'jonoirwin.parrots.directives', 'firebase'])
 
   .constant('FLICKR_API_KEY', '504fd7414f6275eb5b657ddbfba80a2c')
 
@@ -8,9 +8,8 @@ angular.module('jonoirwin.parrots', ['ionic', 'jonoirwin.parrots.services', 'jon
     };
   })
 
-  .controller('MainCtrl', function ($scope, $timeout, $rootScope, Geo, Flickr, $ionicModal, $ionicPlatform) {
+  .controller('MainCtrl', function ($scope, $timeout, $rootScope, Geo, Flickr, $ionicModal, $ionicPlatform, $firebaseArray) {
     var _this = this;
-
     $ionicPlatform.ready(function () {
       // Hide the status bar
       if (window.StatusBar) {
@@ -18,8 +17,16 @@ angular.module('jonoirwin.parrots', ['ionic', 'jonoirwin.parrots.services', 'jon
       }
     });
 
-    $scope.activeBgImageIndex = 0;
+    // Create a Sync'd array with Firebase
+    var ref = new Firebase("https://jhb-parrot-spotter.firebaseio.com/records");
+    $scope.records = $firebaseArray(ref);
+    $scope.addRecord = function () {
+      $scope.records.$add({
+        location: $scope.currentLocationString
+      });
+    };
 
+    $scope.activeBgImageIndex = 0;
 
     this.getBackgroundImage = function (lat, lng, locString) {
       Flickr.search(locString, lat, lng).then(function (resp) {
