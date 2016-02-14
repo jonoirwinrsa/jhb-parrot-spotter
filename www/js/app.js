@@ -1,85 +1,124 @@
-// Ionic Starter App
+angular.module('jonoirwin.parrots', ['ionic', 'jonoirwin.parrots.services', 'jonoirwin.parrots.filters', 'jonoirwin.parrots.directives'])
 
-// angular.module is a global place for creating, registering and retrieving Angular modules
-// 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
-// the 2nd parameter is an array of 'requires'
-// 'starter.services' is found in services.js
-// 'starter.controllers' is found in controllers.js
-angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'])
+  .constant('WUNDERGROUND_API_KEY', '1cc2d3de40fa5af0')
 
-.run(function($ionicPlatform) {
-  $ionicPlatform.ready(function() {
-    // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
-    // for form inputs)
-    if (window.cordova && window.cordova.plugins && window.cordova.plugins.Keyboard) {
-      cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
-      cordova.plugins.Keyboard.disableScroll(true);
+  .constant('FORECASTIO_KEY', '4cd3c5673825a361eb5ce108103ee84a')
 
-    }
-    if (window.StatusBar) {
-      // org.apache.cordova.statusbar required
-      StatusBar.styleDefault();
-    }
-  });
-})
+  .constant('FLICKR_API_KEY', '504fd7414f6275eb5b657ddbfba80a2c')
 
-.config(function($stateProvider, $urlRouterProvider) {
-
-  // Ionic uses AngularUI Router which uses the concept of states
-  // Learn more here: https://github.com/angular-ui/ui-router
-  // Set up the various states which the app can be in.
-  // Each state's controller can be found in controllers.js
-  $stateProvider
-
-  // setup an abstract state for the tabs directive
-    .state('tab', {
-    url: '/tab',
-    abstract: true,
-    templateUrl: 'templates/tabs.html'
+  .filter('int', function () {
+    return function (v) {
+      return parseInt(v) || '';
+    };
   })
 
-  // Each tab has its own nav history stack:
+  .controller('WeatherCtrl', function ($scope, $timeout, $rootScope, Weather, Geo, Flickr, $ionicModal, $ionicPlatform) {
+    var _this = this;
 
-  .state('tab.dash', {
-    url: '/dash',
-    views: {
-      'tab-dash': {
-        templateUrl: 'templates/tab-dash.html',
-        controller: 'DashCtrl'
+    $ionicPlatform.ready(function () {
+      // Hide the status bar
+      if (window.StatusBar) {
+        StatusBar.hide();
       }
-    }
+    });
+
+    $scope.activeBgImageIndex = 0;
+
+    $scope.showSettings = function () {
+      if (!$scope.settingsModal) {
+        // Load the modal from the given template URL
+        $ionicModal.fromTemplateUrl('settings.html', function (modal) {
+          $scope.settingsModal = modal;
+          $scope.settingsModal.show();
+        }, {
+          // The animation we want to use for the modal entrance
+          animation: 'slide-in-up'
+        });
+      } else {
+        $scope.settingsModal.show();
+      }
+    };
+
+
+    this.getBackgroundImage = function (lat, lng, locString) {
+      Flickr.search(locString, lat, lng).then(function (resp) {
+        var photos = resp.photos;
+        if (photos.photo.length) {
+          $scope.bgImages = photos.photo;
+          _this.cycleBgImages();
+        }
+      }, function (error) {
+        console.error('Unable to get Flickr images', error);
+      });
+    };
+
+    this.getCurrent = function (lat, lng, locString) {
+      Weather.getAtLocation(lat, lng).then(function (resp) {
+        /*
+         if(resp.response && resp.response.error) {
+         alert('This Wunderground API Key has exceeded the free limit. Please use your own Wunderground key');
+         return;
+         }
+         */
+        $scope.current = resp.data;
+        console.log('GOT CURRENT', $scope.current);
+        $rootScope.$broadcast('scroll.refreshComplete');
+      }, function (error) {
+        alert('Unable to get current conditions');
+        console.error(error);
+      });
+    };
+
+    $ionicPlatform.ready(function () {
+      var posOptions = {timeout: 10000, enableHighAccuracy: false};
+      $cordovaGeolocation
+        .getCurrentPosition(posOptions)
+        .then(function (position) {
+          var lat = position.coords.latitude;
+          var long = position.coords.longitude;
+        }, function (err) {
+          // error
+        });
+    });
+
+    this.cycleBgImages = function () {
+      $timeout(function cycle() {
+        if ($scope.bgImages) {
+          $scope.activeBgImage = $scope.bgImages[$scope.activeBgImageIndex++ % $scope.bgImages.length];
+        }
+        //$timeout(cycle, 10000);
+      });
+    };
+
+    $scope.refreshData = function () {
+      Geo.getLocation().then(function (position) {
+        var lat = position.coords.latitude;
+        var lng = position.coords.longitude;
+
+        Geo.reverseGeocode(lat, lng).then(function (locString) {
+          $scope.currentLocationString = locString;
+          _this.getBackgroundImage(lat, lng, locString);
+        });
+        _this.getCurrent(lat, lng);
+      }, function (error) {
+        alert('Unable to get current location: ' + error);
+      });
+    };
+
+    $scope.refreshData();
   })
 
-  .state('tab.chats', {
-      url: '/chats',
-      views: {
-        'tab-chats': {
-          templateUrl: 'templates/tab-chats.html',
-          controller: 'ChatsCtrl'
-        }
-      }
-    })
-    .state('tab.chat-detail', {
-      url: '/chats/:chatId',
-      views: {
-        'tab-chats': {
-          templateUrl: 'templates/chat-detail.html',
-          controller: 'ChatDetailCtrl'
-        }
-      }
-    })
+  .controller('SettingsCtrl', function ($scope, Settings) {
+    $scope.settings = Settings.getSettings();
 
-  .state('tab.account', {
-    url: '/account',
-    views: {
-      'tab-account': {
-        templateUrl: 'templates/tab-account.html',
-        controller: 'AccountCtrl'
-      }
-    }
+    // Watch deeply for settings changes, and save them
+    // if necessary
+    $scope.$watch('settings', function (v) {
+      Settings.save();
+    }, true);
+
+    $scope.closeSettings = function () {
+      $scope.modal.hide();
+    };
+
   });
-
-  // if none of the above states are matched, use this as the fallback
-  $urlRouterProvider.otherwise('/tab/dash');
-
-});
