@@ -46,11 +46,17 @@
       <br>
       <br>
       <br>
-      <a class="waves-effect waves-light btn" ng-click="addRecord()"><i class="material-icons left">cloud</i>I just saw them!</a>
+      <a class="waves-effect waves-light btn" ng-click="addRecord()">I just saw them!</a>
       <div class="row">
         <div class="col s12">
           <ul class="collection">
-            <li class="collection-item grey-text" ng-repeat="record in records">{{ record.location }}</li>
+            <li class="collection-item grey-text" ng-repeat="record in records">
+              <span style="display: none">{{ record.$id }}</span> {{ record.suburb }}
+            </li>
+            <li class="collection-item grey-text">
+
+              <a class="waves-effect waves-light btn" ng-click="deleteAll()">Delete All</a>
+            </li>
           </ul>
         </div>
       </div>

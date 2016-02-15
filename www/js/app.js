@@ -29,6 +29,12 @@ angular.module('jonoirwin.parrots', ['ionic', 'jonoirwin.parrots.services', 'jon
         province: res[2]
       });
     };
+    $scope.deleteAll = function () {
+
+      ref.set({
+        items: null
+      });
+    };
 
     $scope.activeBgImageIndex = 0;
 
